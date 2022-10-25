@@ -1,4 +1,4 @@
-local Module: any, Global: any = {}, {}
+local VehicleLoader = {} local Global, Modules, Remotes, Print, Warn, Trace, New
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Helper Variables
@@ -116,11 +116,11 @@ local B85_COLOR_LENGTH = 1
 local B85_TOTAL_LENGTH = 5
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Module Variables
+-- VehicleLoader Variables
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Module.VoxelScale = 2
-Module.VehicleExtents = 24
+VehicleLoader.VoxelScale = 2
+VehicleLoader.VehicleExtents = 24
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Helper Functions
@@ -131,7 +131,7 @@ local function XYZToInt(X: number, Y: number, Z: number, Size: number): number
 end
 
 local function IntToB85(Int: number, Length: number): string
-	assert(Int < 85 ^ Length, ("%i exceeds maximum value of %i"):format(Int, 85 ^ Length - 1))
+	if Int >= 85 ^ Length then error(("%i exceeds maximum value of %i"):format(Int, 85 ^ Length - 1)) end
 
 	local Digits = ""
 
@@ -166,17 +166,17 @@ end
 -- Module Functions
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-function Module.WorldToGrid(Position: Vector3): Vector3
-	local Result = Position / Module.VoxelScale + Vector3.new(Module.VehicleExtents / 2, -1, Module.VehicleExtents / 2)
-	return Vector3.new(math.clamp(math.round(Result.X), 0, Module.VehicleExtents), math.clamp(math.round(Result.Y), 0, Module.VehicleExtents), math.clamp(math.round(Result.Z), 0, Module.VehicleExtents))
+function VehicleLoader.WorldToGrid(Position: Vector3): Vector3
+	local Result = Position / VehicleLoader.VoxelScale + Vector3.new(VehicleLoader.VehicleExtents / 2, -1, VehicleLoader.VehicleExtents / 2)
+	return Vector3.new(math.clamp(math.round(Result.X), 0, VehicleLoader.VehicleExtents), math.clamp(math.round(Result.Y), 0, VehicleLoader.VehicleExtents), math.clamp(math.round(Result.Z), 0, VehicleLoader.VehicleExtents))
 end
 
-function Module.GridToWorld(Position: Vector3): Vector3
-	return (Position - Vector3.new(Module.VehicleExtents / 2, -1, Module.VehicleExtents / 2)) * Module.VoxelScale
+function VehicleLoader.GridToWorld(Position: Vector3): Vector3
+	return (Position - Vector3.new(VehicleLoader.VehicleExtents / 2, -1, VehicleLoader.VehicleExtents / 2)) * VehicleLoader.VoxelScale
 end
 
-function Module:Unpack(Data: string): {{}}
-	assert(typeof(Data) == "string", "Data is not a string")
+function VehicleLoader:Unpack(Data: string): {{}}
+	if type(Data) ~= "string" then error("Data is not a string") end
 
 	local Vehicle = {}
 	local Begin = 1
@@ -193,7 +193,7 @@ function Module:Unpack(Data: string): {{}}
 			local Placement = PartTable:sub(PlacementBegin, PlacementBegin + B85_TOTAL_LENGTH - 1)
 
 			table.insert(Vehicle[PartId], {
-				Position = Vector3.new(IntToXYZ(B85ToInt(Placement:sub(1, B85_POSITION_LENGTH)), Module.VehicleExtents)),
+				Position = Vector3.new(IntToXYZ(B85ToInt(Placement:sub(1, B85_POSITION_LENGTH)), VehicleLoader.VehicleExtents)),
 				Rotation = B85ToInt(Placement:sub(B85_POSITION_LENGTH + 1, B85_POSITION_LENGTH + B85_ROTATION_LENGTH)),
 				Color = B85ToInt(Placement:sub(B85_POSITION_LENGTH + B85_ROTATION_LENGTH + 1, -1))
 			})
@@ -202,39 +202,39 @@ function Module:Unpack(Data: string): {{}}
 		if End then
 			Begin = End + 1
 		else
-			Global.Print("Unpacked", Vehicle)
+			Print("Unpacked", Vehicle)
 			return Vehicle
 		end
 	end
 end
 
-function Module:Pack(Vehicle: {{any}}): string
-	assert(typeof(Vehicle) == "table", "Vehicle is not a table")
+function VehicleLoader:Pack(Vehicle: {{any}}): string
+	if type(Vehicle) ~= "table" then error("Vehicle is not a table") end
 
 	local B85 = ""
 
 	for PartId, Placements in Vehicle do
 		B85 ..= " " .. IntToB85(PartId, B85_PART_LENGTH)
 		for _, Placement in Placements do
-			B85 ..= IntToB85(XYZToInt(Placement.Position.X, Placement.Position.Y, Placement.Position.Z, Module.VehicleExtents), B85_POSITION_LENGTH)
+			B85 ..= IntToB85(XYZToInt(Placement.Position.X, Placement.Position.Y, Placement.Position.Z, VehicleLoader.VehicleExtents), B85_POSITION_LENGTH)
 			B85 ..= IntToB85(Placement.Rotation, B85_ROTATION_LENGTH)
 			B85 ..= IntToB85(Placement.Color, B85_COLOR_LENGTH)
 		end
 	end
 
-	Global.Print("Packed", B85:sub(2, -1))
+	Print("Packed", B85:sub(2, -1))
 	return B85:sub(2, -1) -- Remove extra space
 end
 
-function Module:Insert(Data: string): Model
-	local Vehicle = Module:Unpack(Data)
-	local VehicleModel = Global.New.Instance("Model", nil, "Vehicle")
+function VehicleLoader:Insert(Data: string): Model
+	local Vehicle = VehicleLoader:Unpack(Data)
+	local VehicleModel = New.Instance("Model", nil, "Vehicle")
 
 	for PartId, Placements in Vehicle do
 		for _, Placement in Placements do
-			local NewPart = Global.Shared.Parts[PartId].Model:Clone()
-			NewPart.Color = Global.Shared.PartColors[Placement.Color]
-			NewPart.CFrame = CFrame.new(Module.GridToWorld(Placement.Position)) * ROTATIONS[Placement.Rotation + 1]
+			local NewPart = Modules.Shared.Parts[PartId].Model:Clone()
+			NewPart.Color = Modules.Shared.PartColors[Placement.Color]
+			NewPart.CFrame = CFrame.new(VehicleLoader.GridToWorld(Placement.Position)) * ROTATIONS[Placement.Rotation + 1]
 			NewPart:SetAttribute("Position", Placement.Position)
 			NewPart:SetAttribute("Rotation", Placement.Rotation)
 			NewPart.Parent = VehicleModel
@@ -244,4 +244,6 @@ function Module:Insert(Data: string): Model
 	return VehicleModel
 end
 
-return function(Environment) Global = Environment return Module end
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+return function(...) Global, Modules, Remotes, Print, Warn, Trace, New = ... return VehicleLoader end
