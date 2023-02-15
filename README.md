@@ -1,5 +1,5 @@
 ### Code Samples
 
-VehicleLoader.lua utilizes the [Pronghorn Framework](https://github.com/Iron-Stag-Games/Pronghorn).
+Remotes.lua is a part of the [Pronghorn Framework](https://github.com/Iron-Stag-Games/Pronghorn).
 
-https://github.com/hoontee/hoontee/blob/182db1fc8d422fda121ad3d4de324d606ca77fd9/VehicleLoader.lua#L1-L249
+https://github.com/hoontee/hoontee/blob/d157efe4d5abe761d6d0273e6ffa3f90f4d62d50/Remotes.lua#L1-L222
