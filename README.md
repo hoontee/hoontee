@@ -2,4 +2,4 @@
 
 Remotes.lua is a part of the [Pronghorn Framework](https://github.com/Iron-Stag-Games/Pronghorn).
 
-https://github.com/hoontee/hoontee/blob/a27b47ced2fc7c8be33ffe022c8d5ec066673083/Remotes.lua#L1-L195
+https://github.com/hoontee/hoontee/blob/112c14034101ca779d8e503cba41f1a78e5c2bec/Remotes.lua#L1-L195
